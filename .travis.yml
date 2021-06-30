@@ -1,0 +1,36 @@
+language: generic 
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t youssefh/new-multi-docker-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true youssefh/new-multi-docker-test npm run test -- --coverage
+
+after_success:
+  - docker build -t youssefh/new-multi-client ./client
+  - docker build -t youssefh/new-multi-nginx ./nginx
+  - docker build -t youssefh/new-multi-server ./server
+  - docker build -t youssefh/new-multi-worker ./worker
+  # log in to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push the images to docker hub
+  - docker push youssefh/new-multi-client
+  - docker push youssefh/new-multi-nginx
+  - docker push youssefh/new-multi-server
+  - docker push youssefh/new-multi-worker
+
+
+# deploy:
+#   provider: elasticbeanstalk
+#   region: "us-east-2"
+#   app: "new-docker-react"
+#   env: "Newdockerreact-env"
+#   bucket_name: "elasticbeanstalk-us-east-2-508375513552"
+#   bucket_path: "new-docker-react" 
+#   on:
+#     branch: master
+#   access_key_id: $access_key_id
+#   secret_access_key: $secret_access_key
